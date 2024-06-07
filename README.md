@@ -1,4 +1,4 @@
-# Docker Image for Gazebo:libgazebo9
+# Docker Image for gzweb
 
 This Docker image is based on `gazebo:libgazebo9` and includes additional dependencies for running gzweb
 
