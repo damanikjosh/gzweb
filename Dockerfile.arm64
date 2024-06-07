@@ -1,0 +1,52 @@
+FROM arm64v8/gazebo:libgazebo9
+LABEL authors="joshua"
+SHELL ["/bin/bash", "--login", "-c"]
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    libjansson-dev \
+    libboost-dev \
+    imagemagick \
+    libtinyxml-dev \
+    mercurial cmake \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV NVM_DIR /root/.nvm
+ENV NODE_VERSION 11
+
+# Install nvm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+
+# Install node and npm
+RUN source $NVM_DIR/nvm.sh \
+    && nvm install $NODE_VERSION \
+    && nvm alias default $NODE_VERSION \
+    && nvm use default
+
+# Install gzweb
+RUN git clone https://github.com/osrf/gzweb.git /gzweb \
+    && cd /gzweb \
+    && git checkout gzweb_1.4.0 \
+    && source $NVM_DIR/nvm.sh \
+    && npm install -g bower \
+    && npm install node-gyp@6.1.0 bufferutil@4.0.1 utf-8-validate@5.0.2 \
+    && npm install
+
+WORKDIR /gzweb
+
+# Build gzweb
+RUN source $NVM_DIR/nvm.sh \
+    && npm run deploy --- -m local
+
+EXPOSE 8080
+EXPOSE 7681
+
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["npm", "start"]
